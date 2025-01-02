@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  PROJECT_LOCATION: protoshop-backend/ProtoshopBackend.csproj
+  PROJECT_LOCATION: ProtoshopBackend.csproj
   ELASTIC_BEANSTALK_NAME: Protoshop-backend-env
   ELASTIC_BEANSTALK_ENV_NAME: Protoshop-backend-env
 
