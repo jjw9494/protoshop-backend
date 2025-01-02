@@ -8,7 +8,7 @@ on:
 
 env:
   PROJECT_LOCATION: ProtoshopBackend.csproj
-  ELASTIC_BEANSTALK_NAME: Protoshop-env-1
+  ELASTIC_BEANSTALK_NAME: protoshop
   ELASTIC_BEANSTALK_ENV_NAME: Protoshop-env-1
 
 jobs:
