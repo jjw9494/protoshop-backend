@@ -20,7 +20,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 8.0.x
     
     - name: Setup EB config
       run: |
@@ -74,9 +74,7 @@ jobs:
         aws elasticbeanstalk update-environment \
           --application-name $ELASTIC_BEANSTALK_NAME \
           --environment-name $ELASTIC_BEANSTALK_ENV_NAME \
-          --version-label ${{github.run_id}} \
-          --option-settings \
-            Namespace=aws:autoscaling:launchconfiguration,OptionName=IamInstanceProfile,Value=aws-elasticbeanstalk-ec2-role
+          --version-label ${{github.run_id}}
         aws elasticbeanstalk wait environment-updated \
           --application-name $ELASTIC_BEANSTALK_NAME \
           --environment-name $ELASTIC_BEANSTALK_ENV_NAME
