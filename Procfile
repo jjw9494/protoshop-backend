@@ -1,0 +1,1 @@
+web: dotnet /var/app/current/net8.0/ProtoshopBackend.dll
