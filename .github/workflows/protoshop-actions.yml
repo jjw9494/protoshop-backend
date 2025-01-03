@@ -2,9 +2,9 @@ name: protoshop-actions
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 env:
   PROJECT_LOCATION: ProtoshopBackend.csproj
@@ -27,26 +27,6 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore $PROJECT_LOCATION
-
-      - name: Create .ebextensions
-        run: |
-          mkdir -p .ebextensions
-          cat > .ebextensions/alb-https.config << 'EOL'
-          option_settings:
-            aws:elbv2:listener:443:
-              ListenerEnabled: true
-              Protocol: HTTPS
-              SSLCertificateArns: arn:aws:acm:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:certificate/${{ secrets.SSL_CERTIFICATE_ID }}
-            
-            aws:elbv2:listener:80:
-              ListenerEnabled: true
-              Protocol: HTTP
-              DefaultProcess: default
-            
-            aws:elasticbeanstalk:environment:
-              LoadBalancerType: application
-              EnvironmentType: LoadBalanced
-          EOL
 
       - name: Pack
         run: |
