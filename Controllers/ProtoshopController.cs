@@ -116,7 +116,7 @@ namespace fileshare.Controllers
             string? clientSecret = Environment.GetEnvironmentVariable("AUTH0_CLIENT_SECRET") 
             ?? _configuration["Auth0:ClientSecret"];;
             string code = id;
-            string redirectUri = "http://localhost:3000/";
+            string redirectUri = Environment.GetEnvironmentVariable("REDIRECT_URL");
 
             var tokenResponse = await oauthClient.GetOAuthToken(clientId, clientSecret, code, redirectUri);
 
