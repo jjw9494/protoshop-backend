@@ -31,7 +31,6 @@ jobs:
       - name: Pack
         run: |
           dotnet publish $PROJECT_LOCATION -c Release -o "${{ github.workspace }}/${{github.run_id}}/net8.0"
-          # Create Procfile
           echo "web: dotnet /var/app/current/net8.0/ProtoshopBackend.dll" > "${{ github.workspace }}/${{github.run_id}}/Procfile"
           cd ${{github.run_id}}
           zip -r ../${{github.run_id}}.zip .
@@ -59,7 +58,7 @@ jobs:
 
       - name: Deploy
         run: |
-          aws s3 cp "deploy-files/${{github.run_id}}.zip" s3://elasticbeanstalk-us-east-1-${{ secrets.AWS_ACCOUNT_ID }}/artifact/protoshop-backend/
+          aws s3 cp "${{github.run_id}}.zip" s3://elasticbeanstalk-us-east-1-${{ secrets.AWS_ACCOUNT_ID }}/artifact/protoshop-backend/
           aws elasticbeanstalk create-application-version \
             --application-name $ELASTIC_BEANSTALK_NAME \
             --version-label ${{github.run_id}} \
