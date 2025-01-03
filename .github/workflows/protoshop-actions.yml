@@ -42,15 +42,15 @@ jobs:
             aws:elbv2:listener:80:
               ListenerEnabled: 'true'
               DefaultProcess: default
-              Rules: https_redirect
+              Rules: httpsredirect
             
             # Rule for HTTP to HTTPS redirect
-            aws:elbv2:listenerrule:https_redirect:
+            aws:elbv2:listenerrule:httpsredirect:
               PathPatterns: /*
-              Process: redirect_to_https
+              Process: redirecthttps
             
             # Process for HTTP to HTTPS redirect
-            aws:elasticbeanstalk:environment:process:redirect_to_https:
+            aws:elasticbeanstalk:environment:process:redirecthttps:
               Port: '80'
               Protocol: HTTP
               HealthCheckPath: /
