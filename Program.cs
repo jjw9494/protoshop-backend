@@ -24,15 +24,39 @@ builder.Configuration
     .Build();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy(name: MyAllowSpecificOrigins,
+//         policy =>
+//         {
+//             policy.WithOrigins(Environment.GetEnvironmentVariable("CORS_ACCESS_URL")) 
+//                   .AllowAnyMethod()                   
+//                   .AllowAnyHeader()                   
+//                   .AllowCredentials();         
+//         });
+// });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins(Environment.GetEnvironmentVariable("CORS_ACCESS_URL")) 
-                  .AllowAnyMethod()                   
-                  .AllowAnyHeader()                   
-                  .AllowCredentials();         
+            policy.WithOrigins(
+                    "https://protoshop.vercel.app",
+                    "https://d2dry9zp3u637n.cloudfront.net"
+                )
+                .AllowAnyMethod()
+                .WithHeaders(
+                    "Authorization",
+                    "Content-Type",
+                    "Origin",
+                    "Accept",
+                    "X-Requested-With",
+                    "X-CSRF-Token"
+                )
+                .AllowCredentials()
+                .SetIsOriginAllowed(origin => 
+                    origin.Equals("https://protoshop.vercel.app") || 
+                    origin.Equals("https://d2dry9zp3u637n.cloudfront.net"));
         });
 });
 
