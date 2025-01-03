@@ -32,8 +32,6 @@ jobs:
         run: |
           dotnet publish $PROJECT_LOCATION -c Release -o "${{ github.workspace }}/${{github.run_id}}/net8.0"
           echo "web: dotnet /var/app/current/net8.0/ProtoshopBackend.dll" > "${{ github.workspace }}/${{github.run_id}}/Procfile"
-          mkdir -p "${{ github.workspace }}/${{github.run_id}}/.ebextensions"
-          cp -r .ebextensions/* "${{ github.workspace }}/${{github.run_id}}/.ebextensions/"
           cd ${{github.run_id}}
           zip -r ../${{github.run_id}}.zip .
 
