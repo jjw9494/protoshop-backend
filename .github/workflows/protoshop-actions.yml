@@ -28,10 +28,48 @@ jobs:
       - name: Build
         run: dotnet build --no-restore $PROJECT_LOCATION
 
+      - name: Create .ebextensions
+        run: |
+          mkdir -p .ebextensions
+          cat > .ebextensions/alb-https.config << 'EOL'
+          option_settings:
+            aws:elbv2:listener:443:
+              ListenerEnabled: 'true'
+              Protocol: HTTPS
+              SSLCertificateArns: arn:aws:acm:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:certificate/${{ secrets.SSL_CERTIFICATE_ID }}
+            
+            # Redirect HTTP to HTTPS
+            aws:elbv2:listener:80:
+              ListenerEnabled: 'true'
+              DefaultProcess: default
+              Rules: https_redirect
+            
+            # Rule for HTTP to HTTPS redirect
+            aws:elbv2:listenerrule:https_redirect:
+              PathPatterns: /*
+              Process: redirect_to_https
+            
+            # Process for HTTP to HTTPS redirect
+            aws:elasticbeanstalk:environment:process:redirect_to_https:
+              Port: '80'
+              Protocol: HTTP
+              HealthCheckPath: /
+              MatcherHTTPCode: 200
+              RedirectConfig:
+                Host: '#{host}'
+                Path: '/#{path}'
+                Port: '443'
+                Protocol: HTTPS
+                Query: '#{query}'
+                StatusCode: HTTP_301
+          EOL
+
       - name: Pack
         run: |
           dotnet publish $PROJECT_LOCATION -c Release -o "${{ github.workspace }}/${{github.run_id}}/net8.0"
           echo "web: dotnet /var/app/current/net8.0/ProtoshopBackend.dll" > "${{ github.workspace }}/${{github.run_id}}/Procfile"
+          mkdir -p "${{ github.workspace }}/${{github.run_id}}/.ebextensions"
+          cp -r .ebextensions/* "${{ github.workspace }}/${{github.run_id}}/.ebextensions/"
           cd ${{github.run_id}}
           zip -r ../${{github.run_id}}.zip .
 
