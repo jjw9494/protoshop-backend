@@ -35,39 +35,28 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 //                   .AllowCredentials();         
 //         });
 // });
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy(name: MyAllowSpecificOrigins,
-//         policy =>
-//         {
-//             policy.WithOrigins(
-//                     "https://protoshop.vercel.app",
-//                     "https://d2dry9zp3u637n.cloudfront.net"
-//                 )
-//                 .AllowAnyMethod()
-//                 .WithHeaders(
-//                     "Authorization",
-//                     "Content-Type",
-//                     "Origin",
-//                     "Accept",
-//                     "X-Requested-With",
-//                     "X-CSRF-Token"
-//                 )
-//                 .AllowCredentials()
-//                 .SetIsOriginAllowed(origin => 
-//                     origin.Equals("https://protoshop.vercel.app") || 
-//                     origin.Equals("https://d2dry9zp3u637n.cloudfront.net"));
-//         });
-// });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.SetIsOriginAllowed(_ => true) // Allow any origin temporarily for testing
+            policy.WithOrigins(
+                    "https://protoshop.vercel.app",
+                    "https://d2dry9zp3u637n.cloudfront.net"
+                )
                 .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
+                .WithHeaders(
+                    "Authorization",
+                    "Content-Type",
+                    "Origin",
+                    "Accept",
+                    "X-Requested-With",
+                    "X-CSRF-Token"
+                )
+                .AllowCredentials()
+                .SetIsOriginAllowed(origin => 
+                    origin.Equals("https://protoshop.vercel.app") || 
+                    origin.Equals("https://d2dry9zp3u637n.cloudfront.net"));
         });
 });
 
@@ -113,7 +102,6 @@ builder.Services.AddScoped<ProtoshopService>();
 builder.Services.AddScoped<ProtoshopDbContext>();
 
 var app = builder.Build();
-app.Urls.Add("http://+:5000");
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthentication();
