@@ -24,17 +24,17 @@ builder.Configuration
     .Build();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy(name: MyAllowSpecificOrigins,
-//         policy =>
-//         {
-//             policy.WithOrigins(Environment.GetEnvironmentVariable("CORS_ACCESS_URL")) 
-//                   .AllowAnyMethod()                   
-//                   .AllowAnyHeader()                   
-//                   .AllowCredentials();         
-//         });
-// });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy =>
+        {
+            policy.WithOrigins(Environment.GetEnvironmentVariable("CORS_ACCESS_URL")) 
+                  .AllowAnyMethod()                   
+                  .AllowAnyHeader()                   
+                  .AllowCredentials();         
+        });
+});
 
 // builder.Services.AddCors(options =>
 // {
@@ -61,18 +61,6 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 //         });
 // });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-        policy =>
-        {
-            policy.SetIsOriginAllowed(_ => true) // Temporary for testing
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .WithExposedHeaders("Content-Length", "Content-Range")
-                .AllowCredentials();
-        });
-});
 
 // Rest of your existing configuration
 builder.Services.AddControllers();
