@@ -8,8 +8,8 @@ on:
 
 env:
   PROJECT_LOCATION: ProtoshopBackend.csproj
-  ELASTIC_BEANSTALK_NAME: protoshop-backend
-  ELASTIC_BEANSTALK_ENV_NAME: protoshop-backend
+  ELASTIC_BEANSTALK_NAME: protoshop-app
+  ELASTIC_BEANSTALK_ENV_NAME: Protoshop-app-env
 
 jobs:
   build:
@@ -34,34 +34,18 @@ jobs:
           cat > .ebextensions/alb-https.config << 'EOL'
           option_settings:
             aws:elbv2:listener:443:
-              ListenerEnabled: 'true'
+              ListenerEnabled: true
               Protocol: HTTPS
               SSLCertificateArns: arn:aws:acm:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:certificate/${{ secrets.SSL_CERTIFICATE_ID }}
             
-            # Redirect HTTP to HTTPS
             aws:elbv2:listener:80:
-              ListenerEnabled: 'true'
-              DefaultProcess: default
-              Rules: httpsredirect
-            
-            # Rule for HTTP to HTTPS redirect
-            aws:elbv2:listenerrule:httpsredirect:
-              PathPatterns: /*
-              Process: redirecthttps
-            
-            # Process for HTTP to HTTPS redirect
-            aws:elasticbeanstalk:environment:process:redirecthttps:
-              Port: '80'
+              ListenerEnabled: true
               Protocol: HTTP
-              HealthCheckPath: /
-              MatcherHTTPCode: 200
-              RedirectConfig:
-                Host: '#{host}'
-                Path: '/#{path}'
-                Port: '443'
-                Protocol: HTTPS
-                Query: '#{query}'
-                StatusCode: HTTP_301
+              DefaultProcess: default
+            
+            aws:elasticbeanstalk:environment:
+              LoadBalancerType: application
+              EnvironmentType: LoadBalanced
           EOL
 
       - name: Pack
