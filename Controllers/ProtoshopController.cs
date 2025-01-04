@@ -180,7 +180,7 @@ namespace fileshare.Controllers
                     if (i < maxRetries - 1)
                     {
                         Console.WriteLine($"Attempt {i + 1} failed: {ex.Message}");
-                        await Task.Delay(1000);
+                        await Task.Delay(2000);
                         continue;
                     }
                     Console.WriteLine($"All attempts failed. Final error: {ex.Message}");
