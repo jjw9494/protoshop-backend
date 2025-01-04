@@ -8,7 +8,6 @@ using DotNetEnv;
 using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
-
 // Add environment variables from .env file in development
 if (builder.Environment.IsDevelopment())
 {
@@ -36,9 +35,10 @@ builder.Services.AddCors(options =>
         });
 });
 
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Configure cookies and session
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.CheckConsentNeeded = context => true;
@@ -49,14 +49,17 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60);
+    options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 builder.Services.AddAuthorization(); 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 builder.Services.ConfigureOptions<JwtBearerConfigureOptions>();
 
-// Update MongoDB settings to use environment variables
+// MongoDB settings
 var mongoDBSettings = new MongoDbSettings 
 {
     AtlasURI = Environment.GetEnvironmentVariable("MONGODB_URI") ?? 
@@ -78,10 +81,13 @@ builder.Services.AddScoped<ProtoshopService>();
 builder.Services.AddScoped<ProtoshopDbContext>();
 
 var app = builder.Build();
+
+// Configure middleware in correct order
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
 app.MapControllers();
+
 app.Run();

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProtoshopBackend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+19e15167ccbcd169526bfc045cc0ca520747d877")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9f1a385f05052419b45a20080bda1f3b234cbbc5")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProtoshopBackend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProtoshopBackend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
