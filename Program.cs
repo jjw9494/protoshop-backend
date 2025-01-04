@@ -83,11 +83,20 @@ builder.Services.AddScoped<ProtoshopDbContext>();
 var app = builder.Build();
 
 // Configure middleware in correct order
+app.Urls.Add("http://+:5000");
+app.Urls.Add("http://0.0.0.0:5000");
+
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
-app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 app.MapControllers();
+
+// You can also verify the URLs are set
+foreach (var url in app.Urls)
+{
+    Console.WriteLine($"Listening on: {url}");
+}
 
 app.Run();
