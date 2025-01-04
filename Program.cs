@@ -24,12 +24,24 @@ builder.Configuration
     .Build();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy(name: MyAllowSpecificOrigins,
+//         policy =>
+//         {
+//             policy.WithOrigins(Environment.GetEnvironmentVariable("CORS_ACCESS_URL")) 
+//                   .AllowAnyMethod()                   
+//                   .AllowAnyHeader()                   
+//                   .AllowCredentials();         
+//         });
+// });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins(Environment.GetEnvironmentVariable("CORS_ACCESS_URL")) 
+            policy.SetIsOriginAllowed(_ => true)  // Temporary for testing
                   .AllowAnyMethod()                   
                   .AllowAnyHeader()                   
                   .AllowCredentials();         
@@ -61,8 +73,6 @@ builder.Services.AddCors(options =>
 //         });
 // });
 
-
-// Rest of your existing configuration
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.Configure<CookiePolicyOptions>(options =>
@@ -104,7 +114,7 @@ builder.Services.AddScoped<ProtoshopService>();
 builder.Services.AddScoped<ProtoshopDbContext>();
 
 var app = builder.Build();
-app.Urls.Add("http://+:5000"); 
+app.Urls.Add("http://*:5000");
 app.Urls.Add("http://0.0.0.0:5000");
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
