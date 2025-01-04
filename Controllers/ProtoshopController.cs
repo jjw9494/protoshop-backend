@@ -63,11 +63,12 @@ namespace fileshare.Controllers
 
 public async Task<TokenResponse> GetOAuthToken(string clientId, string clientSecret, string code, string redirectUri)
 {
-    try 
-    {
-        Console.WriteLine($"Client ID starts with: {clientId?.Substring(0, Math.Min(4, clientId?.Length ?? 0))}");
+    Console.WriteLine($"Client ID starts with: {clientId?.Substring(0, Math.Min(4, clientId?.Length ?? 0))}");
     Console.WriteLine($"Redirect URI starts with: {redirectUri?.Substring(0, Math.Min(10, redirectUri?.Length ?? 0))}");
     Console.WriteLine($"Cognito URL starts with: {Environment.GetEnvironmentVariable("COGNITO_URL")?.Substring(0, Math.Min(10, Environment.GetEnvironmentVariable("COGNITO_URL")?.Length ?? 0))}");
+
+    try 
+    {
 
         var tokenEndpoint = Environment.GetEnvironmentVariable("COGNITO_URL") + "/oauth2/token";
         
