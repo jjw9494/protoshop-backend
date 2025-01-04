@@ -99,18 +99,11 @@ builder.Services.AddScoped<ProtoshopDbContext>();
 
 var app = builder.Build();
 
-// Configure middleware
-app.Urls.Add("http://+:5000");
-app.Urls.Add("http://0.0.0.0:5000");
-
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
-app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 app.MapControllers();
-
-// Add health check endpoint
-app.MapGet("/health", () => Results.Ok("Healthy"));
 
 app.Run();
