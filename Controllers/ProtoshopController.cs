@@ -61,29 +61,46 @@ namespace fileshare.Controllers
                 _httpClient = httpClient;
             }
 
-            public async Task<TokenResponse> GetOAuthToken(string clientId, string clientSecret, string code, string redirectUri)
-            {
-                var tokenEndpoint = Environment.GetEnvironmentVariable("COGNITO_URL") + "/oauth2/token";
+public async Task<TokenResponse> GetOAuthToken(string clientId, string clientSecret, string code, string redirectUri)
+{
+    try 
+    {
+        var tokenEndpoint = Environment.GetEnvironmentVariable("COGNITO_URL") + "/oauth2/token";
+        Console.WriteLine("=== OAuth Request Details ===");
+        Console.WriteLine($"Endpoint: {tokenEndpoint}");
+        Console.WriteLine($"Code: {code}");
+        Console.WriteLine($"Redirect URI: {redirectUri}");
 
-                var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
-                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {authHeader}");
+        var requestData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("grant_type", "authorization_code"),
+            new KeyValuePair<string, string>("code", code),
+            new KeyValuePair<string, string>("redirect_uri", redirectUri),
+        });
 
-                var requestData = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("grant_type", "authorization_code"),
-                    new KeyValuePair<string, string>("code", code),
-                    new KeyValuePair<string, string>("redirect_uri", redirectUri),
-                });
+        HttpResponseMessage response = await _httpClient.PostAsync(tokenEndpoint, requestData);
+        string stringResponse = await response.Content.ReadAsStringAsync();
+        
+        Console.WriteLine("=== OAuth Response ===");
+        Console.WriteLine($"Status Code: {response.StatusCode}");
+        Console.WriteLine($"Response Body: {stringResponse}");
 
-                HttpResponseMessage response = await _httpClient.PostAsync(tokenEndpoint, requestData);
-
-                // response.EnsureSuccessStatusCode();
-
-                string stringResponse = await response.Content.ReadAsStringAsync();
-                TokenResponse jsonResponse = JsonSerializer.Deserialize<TokenResponse>(stringResponse);
-                return jsonResponse;
-
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"OAuth Error: {stringResponse}");
         }
+
+        return JsonSerializer.Deserialize<TokenResponse>(stringResponse);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"=== OAuth Error ===");
+        Console.WriteLine($"Error Type: {ex.GetType().Name}");
+        Console.WriteLine($"Error Message: {ex.Message}");
+        Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+        throw;
+    }
+}
          public async Task<UserInfoResponse> GetUserDetails(string accessToken)
             {
                 var tokenEndpoint = Environment.GetEnvironmentVariable("COGNITO_URL") + "/oauth2/userinfo";
