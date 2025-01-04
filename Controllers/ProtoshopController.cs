@@ -101,7 +101,8 @@ namespace fileshare.Controllers
 
         }}
 
-    // Mongo [Route("login/{id}")]
+    // Mongo 
+[Route("login/{id}")]
 [HttpPost]
 public async Task<IActionResult> GetLoginInfoAsync(string id)
 {
