@@ -68,13 +68,14 @@ var mongoDBSettings = new MongoDbSettings
 };
 
 // Configure MongoDB with proper SSL settings
-var mongoUrlBuilder = new MongoUrlBuilder(mongoDBSettings.AtlasURI);
 var settings = MongoClientSettings.FromUrl(new MongoUrl(mongoDBSettings.AtlasURI));
 settings.ServerApi = new ServerApi(ServerApiVersion.V1);
 settings.SslSettings = new SslSettings 
 { 
-    EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12 
+    EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
+    CheckCertificateRevocation = false
 };
+settings.RetryWrites = true;
 settings.ConnectTimeout = TimeSpan.FromSeconds(30);
 settings.ServerSelectionTimeout = TimeSpan.FromSeconds(30);
 
