@@ -6,13 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using MongoDB;
 using DotNetEnv;
 using Microsoft.Extensions.Configuration;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
-// Add environment variables from .env file in development
-if (builder.Environment.IsDevelopment())
-{
-    DotNetEnv.Env.Load();
-}
+
+// Load environment variables
+DotNetEnv.Env.Load();
 
 // Add configuration sources
 builder.Configuration
@@ -59,7 +58,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 builder.Services.ConfigureOptions<JwtBearerConfigureOptions>();
 
-// MongoDB settings
+// MongoDB Configuration
 var mongoDBSettings = new MongoDbSettings 
 {
     AtlasURI = Environment.GetEnvironmentVariable("MONGODB_URI") ?? 
@@ -68,31 +67,50 @@ var mongoDBSettings = new MongoDbSettings
                   builder.Configuration.GetValue<string>("MongoDBSettings:DatabaseName")
 };
 
+// Configure MongoDB with proper SSL settings
+var mongoUrlBuilder = new MongoUrlBuilder(mongoDBSettings.AtlasURI);
+var settings = MongoClientSettings.FromUrl(new MongoUrl(mongoDBSettings.AtlasURI));
+settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+settings.SslSettings = new SslSettings 
+{ 
+    EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12 
+};
+settings.ConnectTimeout = TimeSpan.FromSeconds(30);
+settings.ServerSelectionTimeout = TimeSpan.FromSeconds(30);
+
+var mongoClient = new MongoClient(settings);
+
 builder.Services.Configure<MongoDbSettings>(options =>
 {
     options.AtlasURI = mongoDBSettings.AtlasURI;
     options.DatabaseName = mongoDBSettings.DatabaseName;
 });
 
+// Register MongoDB client as singleton
+builder.Services.AddSingleton<IMongoClient>(mongoClient);
+
 builder.Services.AddDbContext<ProtoshopDbContext>(options => 
-    options.UseMongoDB(mongoDBSettings.AtlasURI ?? "", mongoDBSettings.DatabaseName ?? ""));
+{
+    options.UseMongoDB(mongoClient, mongoDBSettings.DatabaseName ?? "");
+});
 
 builder.Services.AddScoped<ProtoshopService>();
 builder.Services.AddScoped<ProtoshopDbContext>();
 
 var app = builder.Build();
 
+// Configure middleware
+app.Urls.Add("http://+:5000");
+app.Urls.Add("http://0.0.0.0:5000");
+
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
 app.MapControllers();
 
-// You can also verify the URLs are set
-foreach (var url in app.Urls)
-{
-    Console.WriteLine($"Listening on: {url}");
-}
+// Add health check endpoint
+app.MapGet("/health", () => Results.Ok("Healthy"));
 
 app.Run();
