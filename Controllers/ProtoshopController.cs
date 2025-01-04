@@ -13,7 +13,7 @@ using Microsoft.Extensions.Configuration;
 namespace fileshare.Controllers
 {
     [ApiController]
-    [EnableCors("_myAllowSpecificOrigins")]
+
     public class ProtoshopController : ControllerBase
     {
 
