@@ -101,95 +101,76 @@ namespace fileshare.Controllers
 
         }}
 
-    // Mongo 
-        [Route("login/{id}")]
-        [HttpPost]
-        public async Task<IActionResult> GetLoginInfoAsync(string id)
+    // Mongo [Route("login/{id}")]
+[HttpPost]
+public async Task<IActionResult> GetLoginInfoAsync(string id)
+{
+    try 
+    {
+        var httpClient = new HttpClient();
+        var oauthClient = new OAuthClient(httpClient);
+
+        string? clientId = Environment.GetEnvironmentVariable("AUTH0_CLIENT_ID") 
+            ?? _configuration["Auth0:ClientId"];
+        string? clientSecret = Environment.GetEnvironmentVariable("AUTH0_CLIENT_SECRET") 
+            ?? _configuration["Auth0:ClientSecret"];
+        string redirectUri = Environment.GetEnvironmentVariable("REDIRECT_URL");
+
+        // Single attempt for OAuth token since code can only be used once
+        var tokenResponse = await oauthClient.GetOAuthToken(clientId, clientSecret, id, redirectUri);
+            
+        if (tokenResponse?.access_token == null)
         {
-            const int maxRetries = 3;
-            for (int i = 0; i < maxRetries; i++)
+            return BadRequest("Failed to get OAuth token");
+        }
+
+        var userInfoResponse = await oauthClient.GetUserDetails(tokenResponse.access_token);
+            
+        if (userInfoResponse?.sub == null)
+        {
+            return BadRequest("Failed to get user info");
+        }
+
+        // We can keep retries for session handling since this doesn't involve the auth code
+        for (int sessionTry = 0; sessionTry < 3; sessionTry++)
+        {
+            try
             {
-                try 
+                HttpContext.Session.SetString(SessionVariables.SessionSubId, userInfoResponse.sub);
+                HttpContext.Session.SetString(SessionVariables.SessionUsername, userInfoResponse.username ?? "default");
+                HttpContext.Session.SetString(SessionVariables.SessionAccessToken, tokenResponse.access_token);
+                HttpContext.Session.SetString(SessionVariables.SessionRefreshToken, tokenResponse.refresh_token ?? "");
+                break;
+            }
+            catch (Exception ex)
+            {
+                if (sessionTry == 2)
                 {
-                    var httpClient = new HttpClient();
-                    var oauthClient = new OAuthClient(httpClient);
-
-                    string? clientId = Environment.GetEnvironmentVariable("AUTH0_CLIENT_ID") 
-                        ?? _configuration["Auth0:ClientId"];
-                    string? clientSecret = Environment.GetEnvironmentVariable("AUTH0_CLIENT_SECRET") 
-                        ?? _configuration["Auth0:ClientSecret"];
-                    string redirectUri = Environment.GetEnvironmentVariable("REDIRECT_URL");
-
-                    Console.WriteLine($"Attempt {i + 1} - Starting OAuth process with code: {id}");
-
-                    var tokenResponse = await oauthClient.GetOAuthToken(clientId, clientSecret, id, redirectUri);
-                    
-                    if (tokenResponse?.access_token == null)
-                    {
-                        if (i < maxRetries - 1)
-                        {
-                            Console.WriteLine($"Token response was null, retrying... Attempt {i + 1}");
-                            await Task.Delay(2000);
-                            continue;
-                        }
-                        return BadRequest("Failed to get OAuth token after multiple attempts");
-                    }
-
-                    var userInfoResponse = await oauthClient.GetUserDetails(tokenResponse.access_token);
-                    
-                    if (userInfoResponse?.sub == null)
-                    {
-                        return BadRequest("Failed to get user info");
-                    }
-
-                    for (int sessionTry = 0; sessionTry < 3; sessionTry++)
-                    {
-                        try
-                        {
-                            HttpContext.Session.SetString(SessionVariables.SessionSubId, userInfoResponse.sub);
-                            HttpContext.Session.SetString(SessionVariables.SessionUsername, userInfoResponse.username ?? "default");
-                            HttpContext.Session.SetString(SessionVariables.SessionAccessToken, tokenResponse.access_token);
-                            HttpContext.Session.SetString(SessionVariables.SessionRefreshToken, tokenResponse.refresh_token ?? "");
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            if (sessionTry == 2)
-                            {
-                                Console.WriteLine($"Failed to set session after 3 attempts: {ex.Message}");
-                            }
-                            else
-                            {
-                                await Task.Delay(500);
-                            }
-                        }
-                    }
-
-                    var userObject = _protoshopService.GetUserObject(userInfoResponse.sub);
-
-                    if (userObject == null)
-                    {
-                        _protoshopService.CreateNewUserObject(userInfoResponse.sub, userInfoResponse.username);
-                        userObject = _protoshopService.GetUserObject(userInfoResponse.sub);
-                    }
-
-                    return Ok(userObject);
+                    Console.WriteLine($"Failed to set session: {ex.Message}");
                 }
-                catch (Exception ex)
+                else
                 {
-                    if (i < maxRetries - 1)
-                    {
-                        Console.WriteLine($"Attempt {i + 1} failed: {ex.Message}");
-                        await Task.Delay(2000);
-                        continue;
-                    }
-                    Console.WriteLine($"All attempts failed. Final error: {ex.Message}");
-                    return StatusCode(500, $"Internal server error after {maxRetries} attempts");
+                    await Task.Delay(500);
                 }
             }
-
-            return StatusCode(500, "Unexpected error occurred");
         }
+
+        var userObject = _protoshopService.GetUserObject(userInfoResponse.sub);
+
+        if (userObject == null)
+        {
+            _protoshopService.CreateNewUserObject(userInfoResponse.sub, userInfoResponse.username);
+            userObject = _protoshopService.GetUserObject(userInfoResponse.sub);
+        }
+
+        return Ok(userObject);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error in login: {ex.Message}");
+        return StatusCode(500, $"Internal server error: {ex.Message}");
+    }
+}
 
         [Route("UserObject")]
         [HttpGet]
