@@ -65,39 +65,59 @@ public async Task<TokenResponse> GetOAuthToken(string clientId, string clientSec
 {
     try 
     {
+        Console.WriteLine($"Client ID starts with: {clientId?.Substring(0, Math.Min(4, clientId?.Length ?? 0))}");
+    Console.WriteLine($"Redirect URI starts with: {redirectUri?.Substring(0, Math.Min(10, redirectUri?.Length ?? 0))}");
+    Console.WriteLine($"Cognito URL starts with: {Environment.GetEnvironmentVariable("COGNITO_URL")?.Substring(0, Math.Min(10, Environment.GetEnvironmentVariable("COGNITO_URL")?.Length ?? 0))}");
+
         var tokenEndpoint = Environment.GetEnvironmentVariable("COGNITO_URL") + "/oauth2/token";
-        Console.WriteLine("=== OAuth Request Details ===");
-        Console.WriteLine($"Endpoint: {tokenEndpoint}");
-        Console.WriteLine($"Code: {code}");
+        
+        // Log values for debugging (mask secrets)
+        Console.WriteLine($"Client ID length: {clientId?.Length ?? 0}");
+        Console.WriteLine($"Client Secret length: {clientSecret?.Length ?? 0}");
+        Console.WriteLine($"Token Endpoint: {tokenEndpoint}");
         Console.WriteLine($"Redirect URI: {redirectUri}");
 
-        var requestData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("grant_type", "authorization_code"),
-            new KeyValuePair<string, string>("code", code),
-            new KeyValuePair<string, string>("redirect_uri", redirectUri),
-        });
+        // Clear any existing headers
+        _httpClient.DefaultRequestHeaders.Clear();
 
-        HttpResponseMessage response = await _httpClient.PostAsync(tokenEndpoint, requestData);
-        string stringResponse = await response.Content.ReadAsStringAsync();
-        
-        Console.WriteLine("=== OAuth Response ===");
-        Console.WriteLine($"Status Code: {response.StatusCode}");
-        Console.WriteLine($"Response Body: {stringResponse}");
+        // Create auth header
+        var authBytes = Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}");
+        var authHeader = Convert.ToBase64String(authBytes);
+        _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
+
+        // Create form data
+        var formData = new Dictionary<string, string>
+        {
+            { "grant_type", "authorization_code" },
+            { "code", code },
+            { "redirect_uri", redirectUri }
+        };
+
+        var content = new FormUrlEncodedContent(formData);
+
+        // Log the request
+        Console.WriteLine("Request Headers:");
+        foreach (var header in _httpClient.DefaultRequestHeaders)
+        {
+            Console.WriteLine($"{header.Key}: {(header.Key.ToLower() == "authorization" ? "[MASKED]" : string.Join(", ", header.Value))}");
+        }
+
+        var response = await _httpClient.PostAsync(tokenEndpoint, content);
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine($"Response Status: {response.StatusCode}");
+        Console.WriteLine($"Response Body: {responseBody}");
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception($"OAuth Error: {stringResponse}");
+            throw new Exception($"OAuth Error: {responseBody}");
         }
 
-        return JsonSerializer.Deserialize<TokenResponse>(stringResponse);
+        return JsonSerializer.Deserialize<TokenResponse>(responseBody);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"=== OAuth Error ===");
-        Console.WriteLine($"Error Type: {ex.GetType().Name}");
-        Console.WriteLine($"Error Message: {ex.Message}");
-        Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+        Console.WriteLine($"OAuth Error Details: {ex.Message}");
         throw;
     }
 }
